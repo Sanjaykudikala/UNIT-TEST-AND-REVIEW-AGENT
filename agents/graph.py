@@ -1,39 +1,35 @@
 from langgraph.graph import StateGraph, END
-from core.state import ReviewState, TestState
+from core.state import AgentState
 from agents.reviewer import reviewer_node
 from agents.tester import tester_node
 from ingestion.vector_store import query_context
+from requirement_extractor import extract_requirements
 
-# --- Shared Context Retrieval ---
-def fetch_review_context_node(state: ReviewState):
-    code = state["code_input"]
-    context = query_context(code)
+def requirement_node(state: AgentState):
+
+    reqs = extract_requirements(state["file_diff"], state["code_input"])
+    return {"requirements": reqs}
+
+def fetch_context_node(state: AgentState):
+
+    query = state["requirements"].get("feature", state["file_diff"])
+    context = query_context(query)
     return {"context": context}
 
-def fetch_test_context_node(state: TestState):
-    code = state["code_input"]
-    context = query_context(code)
-    return {"context": context}
+workflow = StateGraph(AgentState)
 
-# --- Review Graph ---
-review_graph = StateGraph(ReviewState)
-review_graph.add_node("fetch_context", fetch_review_context_node)
-review_graph.add_node("reviewer", reviewer_node)
+workflow.add_node("requirement_extractor", requirement_node)
+workflow.add_node("fetch_context", fetch_context_node)
+workflow.add_node("reviewer", reviewer_node)
+workflow.add_node("tester", tester_node)
 
-review_graph.set_entry_point("fetch_context")
-review_graph.add_edge("fetch_context", "reviewer")
-review_graph.add_edge("reviewer", END)
+workflow.set_entry_point("requirement_extractor")
+workflow.add_edge("requirement_extractor", "fetch_context")
 
-app_review = review_graph.compile()
+workflow.add_edge("fetch_context", "reviewer")
+workflow.add_edge("fetch_context", "tester")
 
+workflow.add_edge("reviewer", END)
+workflow.add_edge("tester", END)
 
-# --- Test Graph ---
-test_graph = StateGraph(TestState)
-test_graph.add_node("fetch_context", fetch_test_context_node)
-test_graph.add_node("tester", tester_node)
-
-test_graph.set_entry_point("fetch_context")
-test_graph.add_edge("fetch_context", "tester")
-test_graph.add_edge("tester", END)
-
-app_test = test_graph.compile()
+app = workflow.compile()

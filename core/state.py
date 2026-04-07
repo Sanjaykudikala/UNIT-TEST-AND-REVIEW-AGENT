@@ -1,12 +1,13 @@
-from typing import TypedDict, List, Dict, Any
+from typing import TypedDict, List, Dict, Any, Optional
 
-class ReviewState(TypedDict):
-    code_input: str
-    file_path: str
-    context: str
+class AgentState(TypedDict):
+
+    code_input: str  
+    file_diff: str   
+    file_path: str   
+    context: List[Dict[str, Any]] 
+
+    requirements: Dict[str, Any]
+
     review_output: Dict[str, Any]
-
-class TestState(TypedDict):
-    code_input: str
-    file_path: str
     test_output: str

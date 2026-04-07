@@ -21,21 +21,16 @@ def get_collection():
 
 def store_chunks(chunks):
     collection = get_collection()
-    
+
     ids = [chunk["id"] for chunk in chunks]
     documents = [chunk["text"] for chunk in chunks]
     metadatas = [chunk["metadata"] for chunk in chunks]
-    
-    # Chroma accepts batches, but we'll do it in one go assuming medium repo size
-    # If the repo is large, we should batch this. For commons-text, ~1000 chunks is fine.
-    
-    # Check if we already have data
+
     existing = collection.get(ids=ids[:1])
     if existing and existing['ids']:
-        # To simplify, we'll try to update or add.
+
         pass
-        
-    # Chroma upsert allows insert or update
+
     batch_size = 500
     for i in range(0, len(ids), batch_size):
         collection.upsert(
@@ -51,7 +46,14 @@ def query_context(query: str, n_results: int = 3):
         query_texts=[query],
         n_results=n_results
     )
-    # Return matched documents as a single context string
+
     if results and results['documents']:
-        return "\n\n".join(results['documents'][0])
-    return ""
+        context_list = []
+        for i in range(len(results['documents'][0])):
+            context_list.append({
+                "text": results['documents'][0][i],
+                "file": results['metadatas'][0][i].get("file", "unknown"),
+                "score": results['distances'][0][i] if 'distances' in results else 1.0
+            })
+        return context_list
+    return []

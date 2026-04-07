@@ -11,14 +11,13 @@ def get_java_files(repo_path: str):
 
 def parse_and_chunk_repo(repo_path: str):
     java_files = get_java_files(repo_path)
-    # Using RecursiveCharacterTextSplitter tailored for code-like structures
-    # It tries to split on double newlines, single newlines, then spaces.
+
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
         separators=["\nclass ", "\npublic ", "\nprivate ", "\n\n", "\n", " ", ""]
     )
-    
+
     docs = []
     for file_path in java_files:
         try:
@@ -26,7 +25,7 @@ def parse_and_chunk_repo(repo_path: str):
                 content = f.read()
             chunks = splitter.split_text(content)
             for idx, chunk in enumerate(chunks):
-                # We store metadata linking back to the original file
+
                 relative_path = os.path.relpath(file_path, start=repo_path)
                 docs.append({
                     "id": f"{relative_path}_{idx}",
@@ -35,5 +34,5 @@ def parse_and_chunk_repo(repo_path: str):
                 })
         except Exception as e:
             print(f"Failed to read {file_path}: {e}")
-            
+
     return docs
