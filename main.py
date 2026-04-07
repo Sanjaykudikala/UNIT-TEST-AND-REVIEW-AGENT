@@ -43,18 +43,14 @@ def main():
 
     repo_path_input = args.repo
     if not repo_path_input:
-        print("\n" + "="*50)
-        print("  AI CODE AGENTS - SENIOR PR SUITE")
-
-        repo_path_input = input("[*] Please enter the path to the Java repository: ").strip()
+        repo_path_input = input("Enter Java repository path: ").strip()
 
     if not repo_path_input:
-        print("[!] Error: No repository path provided.")
         return
 
     repo_path = os.path.abspath(repo_path_input.replace('"', '').replace("'", ""))
     if not os.path.exists(repo_path):
-        print(f"[!] Error: Path '{repo_path}' not found.")
+        print(f"Error: Path '{repo_path}' not found.")
         return
 
     ensure_dir(args.output)
@@ -66,8 +62,6 @@ def main():
     test_dir = os.path.join(repo_output_dir, "tests")
     ensure_dir(test_dir)
 
-    print("\n" + "="*50)
-
     chunks = parse_and_chunk_repo(repo_path)
     if chunks:
         store_chunks(chunks)
@@ -75,24 +69,19 @@ def main():
     modified_files = get_modified_files(repo_path)
 
     if not modified_files:
-        print(f"    [!] No changes found. ENTERING AUTONOMOUS INJECTION MODE...")
         target_file = scout_target_file(repo_path)
         if target_file:
-
             inject_code_change(target_file)
-
             modified_files = get_modified_files(repo_path)
         else:
-            print(f"    [!] Error: No suitable target file found for injection.")
             return
 
     if not modified_files:
-        print(f"[!] No changes found even after injection attempt. Workflow paused.")
         return
 
     for file_path in modified_files:
         rel_path = os.path.relpath(file_path, start=repo_path)
-        print(f"\n--- [AGENTIC PIPELINE] Processing: {rel_path} ---")
+        print(f"Processing: {rel_path}")
 
         with open(file_path, "r", encoding="utf-8") as f: code_full = f.read()
         file_diff = get_file_diff(repo_path, file_path)
@@ -110,7 +99,7 @@ def main():
         try:
             state = app.invoke(state)
         except Exception as e:
-            print(f"    [!] Graph Error: {e}")
+            print(f"Error: {e}")
             continue
 
         with open(os.path.join(repo_output_dir, "review.json"), "w", encoding="utf-8") as f:
@@ -120,9 +109,7 @@ def main():
         with open(test_file, "w", encoding="utf-8") as f:
             f.write(state["test_output"])
 
-    print("\n" + "="*50)
-    print(f"WORKFLOW COMPLETED SUCCESSFULLY.")
-    print(f" - Output Location: {repo_output_dir}")
+    print(f"Done. Results saved to: {repo_output_dir}")
 
 if __name__ == "__main__":
     main()
