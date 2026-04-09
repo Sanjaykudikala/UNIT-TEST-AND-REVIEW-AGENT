@@ -21,6 +21,7 @@ def get_collection():
 
 def store_chunks(chunks):
     collection = get_collection()
+    print(f"Indexing {len(chunks)} chunks into ChromaDB...")
 
     ids = [chunk["id"] for chunk in chunks]
     documents = [chunk["text"] for chunk in chunks]
@@ -28,8 +29,8 @@ def store_chunks(chunks):
 
     existing = collection.get(ids=ids[:1])
     if existing and existing['ids']:
-
-        pass
+        print("Repo already indexed. Skipping.")
+        return 0
 
     batch_size = 500
     for i in range(0, len(ids), batch_size):
@@ -38,9 +39,11 @@ def store_chunks(chunks):
             documents=documents[i:i+batch_size],
             metadatas=metadatas[i:i+batch_size]
         )
+    print("Indexing complete.")
     return len(ids)
 
 def query_context(query: str, n_results: int = 3):
+    print(f"Querying vector store for: '{query[:50]}...'")
     collection = get_collection()
     results = collection.query(
         query_texts=[query],
@@ -48,6 +51,7 @@ def query_context(query: str, n_results: int = 3):
     )
 
     if results and results['documents']:
+        print(f"Retrieved {len(results['documents'][0])} relevant context blocks.")
         context_list = []
         for i in range(len(results['documents'][0])):
             context_list.append({

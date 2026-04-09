@@ -4,6 +4,7 @@ from core.state import AgentState
 from core.config import settings
 
 def tester_node(state: AgentState):
+    print("🧪 Tester Agent is generating unit tests...")
     llm = ChatGroq(
         model=settings.LLM_MODEL,
         api_key=settings.GROQ_API_KEY,
@@ -16,7 +17,34 @@ def tester_node(state: AgentState):
 
     prompt = PromptTemplate(
         input_variables=["code", "diff", "context", "requirements", "review_summary", "review_issues"],
-        template=
+        template="""
+        You are a Test Automation Expert specializing in Java, JUnit 5, and Mockito.
+        
+        GOAL: Generate a comprehensive unit test for the changes in the provided code.
+        
+        FULL SOURCE CODE:
+        {code}
+        
+        CODE DIFF (CURRENT CHANGES):
+        {diff}
+        
+        REPOSITORY CONTEXT (Patterns/Utils):
+        {context}
+        
+        INTENTED REQUIREMENTS:
+        {requirements}
+        
+        REVIEW FEEDBACK TO ADDRESS:
+        Summary: {review_summary}
+        Issues: {review_issues}
+        
+        Instructions:
+        1. Use JUnit 5 and Mockito.
+        2. Mock all external dependencies.
+        3. Aim for 100% branch coverage of the NEW logic.
+        4. Follow the coding style found in the context.
+        5. Output ONLY the code for the test class. No markdown, no explanations.
+        """
     )
 
     review_summary = state.get("review_output", {}).get("summary", "No review summary.")

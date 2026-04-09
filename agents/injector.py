@@ -16,7 +16,19 @@ def inject_code_change(file_path: str):
 
     prompt = PromptTemplate(
         input_variables=["code"],
-        template=
+        template="""
+        You are a simulator that performs meaningful, realistic code modifications to Java source files.
+        
+        YOUR TASK: Modify the code below to simulate a real developer task (e.g., adding a feature, fixing a bug, refactoring).
+        - Ensure the change is functionally consistent.
+        - Add logic that is easy to unit test.
+        - Keep the overall class structure valid.
+        
+        ORIGINAL CODE:
+        {code}
+        
+        Output ONLY the complete modified Java file. No markdown, no explanations.
+        """
     )
 
     chain = prompt | llm
